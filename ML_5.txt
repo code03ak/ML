@@ -1,0 +1,55 @@
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+from scipy.cluster.hierarchy import dendrogram, linkage
+
+
+url = '/content/sales_data_sample.csv'
+data = pd.read_csv(url, encoding='latin-1')
+print(data.head())
+
+print(data.isnull().sum())
+data.dropna(inplace=True)
+
+features = data[['QUANTITYORDERED', 'SALES', 'PRICEEACH']]
+scaler = StandardScaler()
+scaled_features = scaler.fit_transform(features)
+
+wcss = [] 
+for i in range(1, 11):
+    kmeans = KMeans(n_clusters=i, random_state=42)
+    kmeans.fit(scaled_features)
+    wcss.append(kmeans.inertia_)
+
+plt.figure(figsize=(10, 6))
+plt.plot(range(1, 11), wcss, marker='o')
+plt.title('Elbow Method For Optimal k')
+plt.xlabel('Number of clusters')
+plt.ylabel('WCSS')
+plt.grid()
+plt.show()
+
+
+fig = plt.figure(figsize=(12, 10))
+sns.heatmap(data.select_dtypes(include=['number']).corr(), annot=True, fmt='.2f')
+plt.show()
+
+
+data['ORDERDATE'] = pd.to_datetime(data['ORDERDATE'])
+
+numerical_features = data.select_dtypes(include=['number']) 
+
+kmeans = KMeans(n_clusters=3, random_state=42)
+y_kmeans = kmeans.fit_predict(numerical_features)
+
+plt.figure(figsize=(8, 8))
+sns.scatterplot(x=data['PRICEEACH'], y=data['MSRP'], hue=y_kmeans)
+plt.scatter(kmeans.cluster_centers_[:, numerical_features.columns.get_loc('PRICEEACH')], 
+            kmeans.cluster_centers_[:, numerical_features.columns.get_loc('MSRP')], 
+            c='red', label='Centroids', marker='*') 
+plt.legend()
+plt.show()

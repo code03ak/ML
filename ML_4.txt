@@ -1,0 +1,65 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score
+
+url = "https://raw.githubusercontent.com/abdallamahgoub/diabetes/main/diabetes.csv"
+data = pd.read_csv(url)
+
+print(data.head())
+
+X = data.drop("Outcome", axis=1)
+y = data["Outcome"]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+
+y_pred = knn.predict(X_test)
+
+conf_matrix = confusion_matrix(y_test, y_pred)
+print("Confusion Matrix:")
+print(conf_matrix)
+
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {accuracy:.2f}")
+
+error_rate = 1 - accuracy
+print(f"Error Rate: {error_rate:.2f}")
+
+precision = precision_score(y_test, y_pred)
+print(f"Precision: {precision:.2f}")
+
+recall = recall_score(y_test, y_pred)
+print(f"Recall: {recall:.2f}")
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False,
+            xticklabels=['No Diabetes', 'Diabetes'], yticklabels=['No Diabetes', 'Diabetes'])
+plt.title('Confusion Matrix')
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.show()
+
+plt.figure(figsize=(6, 4))
+plt.bar(['Accuracy', 'Error Rate'], [accuracy, error_rate], color=['green', 'red'])
+plt.ylim(0, 1)
+plt.ylabel('Score')
+plt.title('Accuracy and Error Rate')
+plt.show()
+
+plt.figure(figsize=(6, 4))
+plt.bar(['Precision', 'Recall'], [precision, recall], color=['blue', 'orange'])
+plt.ylim(0, 1)
+plt.ylabel('Score')
+plt.title('Precision and Recall')
+plt.show()
+
+plt.figure(figsize=(15, 10))
+data.hist(bins=20, figsize=(15, 10), grid=False)
+plt.suptitle('Feature Distributions', fontsize=20)
+plt.show()

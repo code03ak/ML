@@ -1,0 +1,76 @@
+pip install pandas scikit-learn tensorflow
+
+
+import pandas as pd
+
+
+url = "/content/Churn_Modelling.csv"
+data = pd.read_csv(url)
+
+
+print(data.head())
+
+from sklearn.model_selection import train_test_split
+
+
+data = data.drop(columns=['RowNumber', 'CustomerId', 'Surname'])
+
+
+X = data.drop(columns='Exited')  
+y = data['Exited']                
+
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+import pandas as pd
+
+categorical_features = ['Geography', 'Gender']
+numerical_features = ['CreditScore', 'Age', 'Tenure', 'Balance', 'NumOfProducts', 'HasCrCard', 'IsActiveMember', 'EstimatedSalary']
+
+numerical_transformer = StandardScaler()
+categorical_transformer = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', numerical_transformer, numerical_features),
+        ('cat', categorical_transformer, categorical_features)])
+
+X_train_scaled = preprocessor.fit_transform(X_train)
+X_test_scaled = preprocessor.transform(X_test)
+
+X_train_scaled = pd.DataFrame(X_train_scaled, columns=preprocessor.get_feature_names_out())
+X_test_scaled = pd.DataFrame(X_test_scaled, columns=preprocessor.get_feature_names_out())
+
+
+
+from tensorflow import keras
+from tensorflow.keras import layers
+
+model = keras.Sequential()
+model.add(layers.Dense(16, activation='relu', input_shape=(X_train_scaled.shape[1],)))
+model.add(layers.Dense(8, activation='relu'))
+model.add(layers.Dense(4, activation='relu'))
+model.add(layers.Dense(1, activation='sigmoid'))
+
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+model.fit(X_train_scaled, y_train, epochs=50, batch_size=32, validation_split=0.2)
+
+
+from sklearn.metrics import accuracy_score, confusion_matrix
+
+y_pred = model.predict(X_test_scaled)
+y_pred_classes = (y_pred > 0.5).astype(int)
+
+accuracy = accuracy_score(y_test, y_pred_classes)
+print(f'Accuracy: {accuracy:.2f}')
+
+cm = confusion_matrix(y_test, y_pred_classes)
+print('Confusion Matrix:')
+print(cm)
+
+
+
+
